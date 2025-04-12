@@ -25,7 +25,7 @@ X_scaled = scaler.fit_transform(X)
 # Train-test split
 X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
 
-# Untuned models
+# Evaluation function
 def evaluate_model(name, model, X_test, y_test):
     y_pred = model.predict(X_test)
     return {
@@ -36,6 +36,7 @@ def evaluate_model(name, model, X_test, y_test):
         "F1 Score": f1_score(y_test, y_pred)
     }
 
+# Base models
 models = {
     "Logistic Regression": LogisticRegression(),
     "Decision Tree": DecisionTreeClassifier(),
@@ -44,15 +45,19 @@ models = {
     "Gradient Boosting": GradientBoostingClassifier()
 }
 
-results = []
+# Fit untuned models only once
+untuned_results = []
+untuned_models = {}
 for name, model in models.items():
     model.fit(X_train, y_train)
-    results.append(evaluate_model(name + " (Untuned)", model, X_test, y_test))
+    untuned_models[name] = model
+    untuned_results.append(evaluate_model(name + " (Untuned)", model, X_test, y_test))
 
 # Streamlit UI
 st.title("PCOS Diagnosis Model Comparison Dashboard")
 model_choice = st.sidebar.selectbox("Select Model to Tune", list(models.keys()))
 
+# Hyperparameter selection
 if model_choice == "Logistic Regression":
     C = st.sidebar.select_slider("C (Regularization Strength)", options=[0.01, 0.1, 1, 10], value=1)
     penalty_opt = st.sidebar.selectbox("Penalty", options=['l1', 'l2', 'elasticnet', 'None'])
@@ -92,25 +97,34 @@ elif model_choice == "Gradient Boosting":
     model = GradientBoostingClassifier()
     param_grid = {"n_estimators": [n_estimators], "learning_rate": [learning_rate]}
 
-# Tune model
+# Tune selected model
 st.subheader(f"Tuned Model: {model_choice}")
 tuner = GridSearchCV(model, param_grid, cv=5)
 tuner.fit(X_train, y_train)
 best_model = tuner.best_estimator_
 tuned_result = evaluate_model(model_choice + " (Tuned)", best_model, X_test, y_test)
 
-# Combine results
-final_results_df = pd.DataFrame(results + [tuned_result])
+# Display untuned and tuned metrics separately
+untuned_df = pd.DataFrame([res for res in untuned_results if model_choice in res['Model']])
+tuned_df = pd.DataFrame([tuned_result])
 
-# Display results
-st.dataframe(final_results_df)
+st.subheader("Untuned Model Metrics")
+st.dataframe(untuned_df.set_index("Model"))
 
-# Plot
-st.subheader("Model Comparison")
-fig, ax = plt.subplots(figsize=(12, 6))
-sns.barplot(data=final_results_df.melt(id_vars="Model", var_name="Metric", value_name="Score"),
-            x="Model", y="Score", hue="Metric", ax=ax)
-plt.xticks(rotation=45)
+st.subheader("Tuned Model Metrics")
+st.dataframe(tuned_df.set_index("Model"))
+
+# Plot individual bar charts
+st.subheader("Untuned Model Performance")
+fig1, ax1 = plt.subplots(figsize=(8, 4))
+sns.barplot(data=untuned_df.melt(id_vars="Model", var_name="Metric", value_name="Score"),
+            x="Metric", y="Score", hue="Model", ax=ax1)
 plt.tight_layout()
-st.pyplot(fig)
+st.pyplot(fig1)
 
+st.subheader("Tuned Model Performance")
+fig2, ax2 = plt.subplots(figsize=(8, 4))
+sns.barplot(data=tuned_df.melt(id_vars="Model", var_name="Metric", value_name="Score"),
+            x="Metric", y="Score", hue="Model", ax=ax2)
+plt.tight_layout()
+st.pyplot(fig2)
