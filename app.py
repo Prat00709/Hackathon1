@@ -83,7 +83,7 @@ model_choice = st.sidebar.selectbox("Select Model to Tune", list(models.keys()))
 
 # Hyperparameter selection
 if model_choice == "Logistic Regression":
-    C = st.sidebar.select_slider("C (Regularization Strength)", 0.00,10.0,5.0)
+    C = st.sidebar.slider("C (Regularization Strength)", 0.00,10.0,5.0)
     penalty_opt = st.sidebar.selectbox("Penalty", options=['l1', 'l2', 'elasticnet', 'None'])
     penalty = None if penalty_opt == "None" else penalty_opt
     max_iter = st.sidebar.select_slider("Max Iterations", options=[100, 200, 500, 1000, 2000], value=1000)
