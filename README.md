@@ -62,3 +62,28 @@ Matplotlib & Seaborn: For static and dynamic visualizations of model performance
 Streamlit: To create the interactive, real-time dashboard for model comparison and tuning.
 
 GridSearchCV: For systematic and automated hyperparameter optimization with cross-validation.
+
+
+Setup Instructions
+
+1. Clone or Download the Project
+
+2. Install Python (if not already installed)
+
+3. Create and Activate a Virtual Environment
+
+4. Install Required Libraries
+
+5. Place the Dataset
+
+6. Run the Streamlit App
+
+7. Explore the Dashboard
+
+Once launched, a browser window will open showing your interactive dashboard. Use the sidebar to:
+
+Select a model
+
+Tune hyperparameters
+
+View updated metrics and performance plots
