@@ -1,8 +1,8 @@
+import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-import streamlit as st
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
@@ -25,16 +25,7 @@ X_scaled = scaler.fit_transform(X)
 # Train-test split
 X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
 
-# Define models
-models = {
-    "Logistic Regression": LogisticRegression(),
-    "Decision Tree": DecisionTreeClassifier(),
-    "Random Forest": RandomForestClassifier(),
-    "SVM": SVC(),
-    "Gradient Boosting": GradientBoostingClassifier()
-}
-
-# Function to evaluate model
+# Untuned models
 def evaluate_model(name, model, X_test, y_test):
     y_pred = model.predict(X_test)
     return {
@@ -45,61 +36,81 @@ def evaluate_model(name, model, X_test, y_test):
         "F1 Score": f1_score(y_test, y_pred)
     }
 
+models = {
+    "Logistic Regression": LogisticRegression(),
+    "Decision Tree": DecisionTreeClassifier(),
+    "Random Forest": RandomForestClassifier(),
+    "SVM": SVC(),
+    "Gradient Boosting": GradientBoostingClassifier()
+}
+
+results = []
+for name, model in models.items():
+    model.fit(X_train, y_train)
+    results.append(evaluate_model(name + " (Untuned)", model, X_test, y_test))
+
 # Streamlit UI
-st.title("PCOS Diagnosis: Model Evaluation Dashboard")
-st.sidebar.header("Select Model and Tune Parameters")
+st.title("PCOS Diagnosis Model Comparison Dashboard")
+model_choice = st.sidebar.selectbox("Select Model to Tune", list(models.keys()))
 
-# Select model
-model_name = st.sidebar.selectbox("Choose Model", list(models.keys()))
+if model_choice == "Logistic Regression":
+    C = st.sidebar.select_slider("C (Regularization Strength)", options=[0.01, 0.1, 1, 10], value=1)
+    penalty_opt = st.sidebar.selectbox("Penalty", options=['l1', 'l2', 'elasticnet', 'None'])
+    penalty = None if penalty_opt == "None" else penalty_opt
+    if penalty == "elasticnet":
+        l1_ratio = st.sidebar.slider("L1 Ratio (only for elasticnet)", 0.0, 1.0, 0.5)
+        model = LogisticRegression(solver='saga', max_iter=1000)
+        param_grid = {"C": [C], "penalty": [penalty], "l1_ratio": [l1_ratio]}
+    else:
+        model = LogisticRegression(solver='saga', max_iter=1000)
+        param_grid = {"C": [C], "penalty": [penalty]}
 
-# Set tuning options for selected model
-params = {}
-if model_name == "Logistic Regression":
-    C = st.sidebar.select_slider("C (Regularization Strength)", options=[0.001, 0.01, 0.1, 1, 10], value=1)
-    penalty = st.sidebar.selectbox("Penalty",options=['l1','l2','elasticnet','None'])
-    max_iter=st.sidebar.select_sidebar("Max Iterations",options= [100,500,1000,1500],value=100)
-    params = {"C": [C],"penalty":[penalty],"max_iter":[max_iter]}
-elif model_name == "Decision Tree":
-    max_depth = st.sidebar.select_slider("Max Depth", options=[3, 5, 7, 10, None], value=5)
-    split = st.sidebar.select_slider("Minimum Sample Split",options = [1,2,3,None],value=1)
-    crit=st.sidebar.selectbox("Criterion",options=['gini','entropy','log_loss'])
-    params = {"max_depth": [max_depth],"split":[split],"crit":[crit]}
-elif model_name == "Random Forest":
-    n_estimators = st.sidebar.select_slider("Estimators", options=[10, 50, 100, 200], value=100)
-    max_depth = st.sidebar.select_slider("Max Depth", options=[3, 5, 10, 20, None], value=10)
-    params = {"n_estimators": [n_estimators], "max_depth": [max_depth]}
-elif model_name == "SVM":
-    C = st.sidebar.select_slider("C (Regularization)", options=[0.1, 1, 10], value=1)
-    kernel = st.sidebar.selectbox("Kernel", ["linear", "rbf","poly"])
-    gamma = st.sidebar.selectbox("Gamma (Kernel Co-efficient)",options=['scale','auto'])
-    params = {"C": [C], "kernel": [kernel],"gamma":[gamma]}
-elif model_name == "Gradient Boosting":
-    n_estimators = st.sidebar.select_slider("Estimators", options=[50, 100, 200], value=100)
-    learning_rate = st.sidebar.select_slider("Learning Rate", options=[0.01, 0.1, 0.2], value=0.1)
-    params = {"n_estimators": [n_estimators], "learning_rate": [learning_rate]}
+elif model_choice == "Decision Tree":
+    max_depth_opt = st.sidebar.selectbox("Max Depth", [3, 5, 7, 10, "None"])
+    max_depth = None if max_depth_opt == "None" else int(max_depth_opt)
+    crit = st.sidebar.selectbox("Criterion", options=['gini', 'entropy', 'log_loss'])
+    model = DecisionTreeClassifier()
+    param_grid = {"max_depth": [max_depth], "criterion": [crit]}
 
-# Train untuned version
-base_model = models[model_name]
-base_model.fit(X_train, y_train)
-untuned_result = evaluate_model(f"{model_name} (Untuned)", base_model, X_test, y_test)
+elif model_choice == "Random Forest":
+    n_estimators = st.sidebar.select_slider("n_estimators", options=[50, 100, 200], value=100)
+    max_depth_opt = st.sidebar.selectbox("Max Depth", [5, 10, 20, "None"])
+    max_depth = None if max_depth_opt == "None" else int(max_depth_opt)
+    model = RandomForestClassifier()
+    param_grid = {"n_estimators": [n_estimators], "max_depth": [max_depth]}
 
-# Train tuned version
-tuner = GridSearchCV(base_model, params, cv=5)
+elif model_choice == "SVM":
+    C = st.sidebar.select_slider("C", options=[0.1, 1, 10], value=1)
+    kernel = st.sidebar.selectbox("Kernel", ["linear", "rbf", "poly"])
+    gamma = st.sidebar.selectbox("Gamma (Kernel Co-efficient)", options=['scale', 'auto'])
+    model = SVC()
+    param_grid = {"C": [C], "kernel": [kernel], "gamma": [gamma]}
+
+elif model_choice == "Gradient Boosting":
+    n_estimators = st.sidebar.select_slider("n_estimators", options=[50, 100, 200], value=100)
+    learning_rate = st.sidebar.select_slider("Learning Rate", options=[0.01, 0.05, 0.1], value=0.1)
+    model = GradientBoostingClassifier()
+    param_grid = {"n_estimators": [n_estimators], "learning_rate": [learning_rate]}
+
+# Tune model
+st.subheader(f"Tuned Model: {model_choice}")
+tuner = GridSearchCV(model, param_grid, cv=5)
 tuner.fit(X_train, y_train)
-tuned_model = tuner.best_estimator_
-tuned_result = evaluate_model(f"{model_name} (Tuned)", tuned_model, X_test, y_test)
+best_model = tuner.best_estimator_
+tuned_result = evaluate_model(model_choice + " (Tuned)", best_model, X_test, y_test)
 
 # Combine results
-comparison_df = pd.DataFrame([untuned_result, tuned_result])
+final_results_df = pd.DataFrame(results + [tuned_result])
 
-# Show results
-st.subheader(f"{model_name} Evaluation Summary")
-st.dataframe(comparison_df.set_index("Model"))
+# Display results
+st.dataframe(final_results_df)
 
 # Plot
-st.subheader("Comparison Chart")
-plt.figure(figsize=(10, 6))
-melted = comparison_df.melt(id_vars="Model", var_name="Metric", value_name="Score")
-sns.barplot(data=melted, x="Metric", y="Score", hue="Model")
-plt.title(f"{model_name}: Untuned vs Tuned")
-st.pyplot(plt.gcf())
+st.subheader("Model Comparison")
+fig, ax = plt.subplots(figsize=(12, 6))
+sns.barplot(data=final_results_df.melt(id_vars="Model", var_name="Metric", value_name="Score"),
+            x="Model", y="Score", hue="Metric", ax=ax)
+plt.xticks(rotation=45)
+plt.tight_layout()
+st.pyplot(fig)
+
