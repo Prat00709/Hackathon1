@@ -55,6 +55,30 @@ for name, model in models.items():
 
 # Streamlit UI
 st.title("PCOS Diagnosis Model Comparison Dashboard")
+
+# Show raw dataset
+st.subheader("PCOS Dataset")
+st.dataframe(df)
+
+# Show correlation matrix
+st.subheader("Correlation Matrix")
+corr_matrix = df.corr(numeric_only=True)
+fig_corr, ax_corr = plt.subplots(figsize=(10, 6))
+sns.heatmap(corr_matrix, annot=True, cmap="coolwarm", fmt=".2f", ax=ax_corr)
+st.pyplot(fig_corr)
+
+# Show pairplots with features highly correlated with diagnosis
+st.subheader("Pairplot of Top Correlated Features with PCOS Diagnosis")
+diag_corr = corr_matrix['PCOS_Diagnosis'].drop('PCOS_Diagnosis')
+top_corr_features = diag_corr[diag_corr.abs() > 0.3].index.tolist()
+if top_corr_features:
+    pairplot_data = df[top_corr_features + ['PCOS_Diagnosis']]
+    fig_pair = sns.pairplot(pairplot_data, hue='PCOS_Diagnosis', diag_kind='kde')
+    st.pyplot(fig_pair)
+else:
+    st.write("No features with strong correlation to PCOS_Diagnosis found.")
+
+# Sidebar model selection
 model_choice = st.sidebar.selectbox("Select Model to Tune", list(models.keys()))
 
 # Hyperparameter selection
@@ -62,13 +86,14 @@ if model_choice == "Logistic Regression":
     C = st.sidebar.select_slider("C (Regularization Strength)", options=[0.01, 0.1, 1, 10], value=1)
     penalty_opt = st.sidebar.selectbox("Penalty", options=['l1', 'l2', 'elasticnet', 'None'])
     penalty = None if penalty_opt == "None" else penalty_opt
+    max_iter = st.sidebar.select_slider("Max Iterations", options=[100, 200, 500, 1000, 2000], value=1000)
     if penalty == "elasticnet":
         l1_ratio = st.sidebar.slider("L1 Ratio (only for elasticnet)", 0.0, 1.0, 0.5)
-        model = LogisticRegression(solver='saga', max_iter=1000)
-        param_grid = {"C": [C], "penalty": [penalty], "l1_ratio": [l1_ratio]}
+        model = LogisticRegression(solver='saga', max_iter=max_iter)
+        param_grid = {"C": [C], "penalty": [penalty], "l1_ratio": [l1_ratio], "max_iter": [max_iter]}
     else:
-        model = LogisticRegression(solver='saga', max_iter=1000)
-        param_grid = {"C": [C], "penalty": [penalty]}
+        model = LogisticRegression(solver='saga', max_iter=max_iter)
+        param_grid = {"C": [C], "penalty": [penalty], "max_iter": [max_iter]}
 
 elif model_choice == "Decision Tree":
     max_depth_opt = st.sidebar.selectbox("Max Depth", [3, 5, 7, 10, "None"])
@@ -104,27 +129,19 @@ tuner.fit(X_train, y_train)
 best_model = tuner.best_estimator_
 tuned_result = evaluate_model(model_choice + " (Tuned)", best_model, X_test, y_test)
 
-# Display untuned and tuned metrics separately
-untuned_df = pd.DataFrame([res for res in untuned_results if model_choice in res['Model']])
-tuned_df = pd.DataFrame([tuned_result])
+# Display metrics together
+combined_df = pd.DataFrame([
+    res for res in untuned_results if model_choice in res['Model']
+] + [tuned_result])
 
-st.subheader("Untuned Model Metrics")
-st.dataframe(untuned_df.set_index("Model"))
+st.subheader("Model Metrics Comparison")
+st.dataframe(combined_df.set_index("Model"))
 
-st.subheader("Tuned Model Metrics")
-st.dataframe(tuned_df.set_index("Model"))
-
-# Plot individual bar charts
-st.subheader("Untuned Model Performance")
-fig1, ax1 = plt.subplots(figsize=(8, 4))
-sns.barplot(data=untuned_df.melt(id_vars="Model", var_name="Metric", value_name="Score"),
-            x="Metric", y="Score", hue="Model", ax=ax1)
+# Plot single comparison chart
+st.subheader("Tuned vs Untuned Performance Comparison")
+fig, ax = plt.subplots(figsize=(10, 5))
+sns.barplot(data=combined_df.melt(id_vars="Model", var_name="Metric", value_name="Score"),
+            x="Metric", y="Score", hue="Model", ax=ax)
+plt.title(f"{model_choice}: Tuned vs Untuned Performance")
 plt.tight_layout()
-st.pyplot(fig1)
-
-st.subheader("Tuned Model Performance")
-fig2, ax2 = plt.subplots(figsize=(8, 4))
-sns.barplot(data=tuned_df.melt(id_vars="Model", var_name="Metric", value_name="Score"),
-            x="Metric", y="Score", hue="Model", ax=ax2)
-plt.tight_layout()
-st.pyplot(fig2)
+st.pyplot(fig)
