@@ -56,19 +56,23 @@ model_name = st.sidebar.selectbox("Choose Model", list(models.keys()))
 params = {}
 if model_name == "Logistic Regression":
     C = st.sidebar.select_slider("C (Regularization Strength)", options=[0.001, 0.01, 0.1, 1, 10], value=1)
-    params = {"C": [C]}
+    penalty = st.sidebar.select_sidebar("Penalty",options=['l1','l2','elasticnet','None'])
+    max_iter=st.sidebar.select_sidebar("Max Iterations",options= [100,500,1000,1500],value=100)
+    params = {"C": [C],"penalty":[penalty],"max_iter":[max_iter]}
 elif model_name == "Decision Tree":
     max_depth = st.sidebar.select_slider("Max Depth", options=[3, 5, 7, 10, None], value=5)
     split = st.sidebar.select_slider("Minimum Sample Split",options = [1,2,3,None],value=1)
-    params = {"max_depth": [max_depth],"split":[split]}
+    crit=st.sidebar.select_sidebar("Criterion",options=['gini','entropy','log_loss'])
+    params = {"max_depth": [max_depth],"split":[split],"crit":[crit]}
 elif model_name == "Random Forest":
     n_estimators = st.sidebar.select_slider("Estimators", options=[10, 50, 100, 200], value=100)
     max_depth = st.sidebar.select_slider("Max Depth", options=[3, 5, 10, 20, None], value=10)
     params = {"n_estimators": [n_estimators], "max_depth": [max_depth]}
 elif model_name == "SVM":
     C = st.sidebar.select_slider("C (Regularization)", options=[0.1, 1, 10], value=1)
-    kernel = st.sidebar.selectbox("Kernel", ["linear", "rbf"])
-    params = {"C": [C], "kernel": [kernel]}
+    kernel = st.sidebar.selectbox("Kernel", ["linear", "rbf","poly"])
+    gamma = st.sidebar.selectbox("Gamma (Kernel Co-efficient)",options=['scale','auto'])
+    params = {"C": [C], "kernel": [kernel],"gamma":[gamma]}
 elif model_name == "Gradient Boosting":
     n_estimators = st.sidebar.select_slider("Estimators", options=[50, 100, 200], value=100)
     learning_rate = st.sidebar.select_slider("Learning Rate", options=[0.01, 0.1, 0.2], value=0.1)
