@@ -96,21 +96,21 @@ if model_choice == "Logistic Regression":
         param_grid = {"C": [C], "penalty": [penalty], "max_iter": [max_iter]}
 
 elif model_choice == "Decision Tree":
-    max_depth_opt = st.sidebar.selectbox("Max Depth", [3, 5, 7, 10, "None"])
+    max_depth_opt = st.sidebar.slider("Max Depth", 0.0,10,5)
     max_depth = None if max_depth_opt == "None" else int(max_depth_opt)
     crit = st.sidebar.selectbox("Criterion", options=['gini', 'entropy', 'log_loss'])
     model = DecisionTreeClassifier()
     param_grid = {"max_depth": [max_depth], "criterion": [crit]}
 
 elif model_choice == "Random Forest":
-    n_estimators = st.sidebar.select_slider("n_estimators", options=[50, 100, 200], value=100)
-    max_depth_opt = st.sidebar.selectbox("Max Depth", [5, 10, 20, "None"])
+    n_estimators = st.sidebar.slider("n_estimators", 0.0,200,100)
+    max_depth_opt = st.sidebar.slider("Max Depth", 0.0,10,5)
     max_depth = None if max_depth_opt == "None" else int(max_depth_opt)
     model = RandomForestClassifier()
     param_grid = {"n_estimators": [n_estimators], "max_depth": [max_depth]}
 
 elif model_choice == "SVM":
-    C = st.sidebar.select_slider("C", options=[0.1, 1, 10], value=1)
+    C = st.sidebar.slider("C", 0.1,10,5)
     kernel = st.sidebar.selectbox("Kernel", ["linear", "rbf", "poly"])
     gamma = st.sidebar.selectbox("Gamma (Kernel Co-efficient)", options=['scale', 'auto'])
     model = SVC()
@@ -118,7 +118,7 @@ elif model_choice == "SVM":
 
 elif model_choice == "Gradient Boosting":
     n_estimators = st.sidebar.select_slider("n_estimators", options=[50, 100, 200], value=100)
-    learning_rate = st.sidebar.select_slider("Learning Rate", options=[0.01, 0.05, 0.1], value=0.1)
+    learning_rate = st.sidebar.slider("Learning Rate", 0.00,1,0.5)
     model = GradientBoostingClassifier()
     param_grid = {"n_estimators": [n_estimators], "learning_rate": [learning_rate]}
 
