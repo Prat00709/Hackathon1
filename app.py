@@ -54,7 +54,7 @@ model_name = st.sidebar.selectbox("Select Model", list(models.keys()))
 
 # Display hyperparameter options based on the selected model
 if model_name == "Logistic Regression":
-    C = st.sidebar.select_slider("C (Regularization Strength)", options=[0.001,0.01,0.1,10], value=10)
+    C = st.sidebar.select_slider("C (Regularization Strength)", options=[0.1, 1, 10], value=1)
     params = {"C": [C]}
 elif model_name == "Decision Tree":
     max_depth = st.sidebar.select_slider("Max Depth", options=[3, 5, 7, 10], value=5)
@@ -72,28 +72,33 @@ elif model_name == "Gradient Boosting":
     learning_rate = st.sidebar.select_slider("Learning Rate", options=[0.01, 0.1], value=0.1)
     params = {"n_estimators": [n_estimators], "learning_rate": [learning_rate]}
 
-# Train selected model with hyperparameters
-model = models[model_name]
-grid_search = GridSearchCV(model, params, cv=5)
+# Train untuned models
+untuned_results = []
+for name, model in models.items():
+    model.fit(X_train, y_train)
+    untuned_results.append(evaluate_model(name, model, X_test, y_test))
+
+# Hyperparameter tuning for selected model
+grid_search = GridSearchCV(models[model_name], params, cv=5)
 grid_search.fit(X_train, y_train)
 best_model = grid_search.best_estimator_
 
-# Evaluate the model
-result = evaluate_model(f"{model_name} (Tuned)", best_model, X_test, y_test)
+# Evaluate the tuned model
+tuned_result = evaluate_model(f"{model_name} (Tuned)", best_model, X_test, y_test)
+
+# Combine untuned and tuned results
+combined_results = pd.DataFrame(untuned_results)
+combined_results = pd.concat([combined_results, pd.DataFrame([tuned_result])], ignore_index=True)
 
 # Display results
 st.subheader(f"Model Evaluation: {model_name}")
-st.write(result)
+st.write(tuned_result)
 
-# Visualization
-results_df = pd.DataFrame([result])
-
+# Visualization of both untuned and tuned models
 st.subheader("Model Comparison Before and After Tuning")
-# Visualizing results
 plt.figure(figsize=(12, 6))
-sns.barplot(data=results_df.melt(id_vars="Model", var_name="Metric", value_name="Score"), x="Model", y="Score", hue="Metric")
+sns.barplot(data=combined_results.melt(id_vars="Model", var_name="Metric", value_name="Score"), x="Model", y="Score", hue="Metric")
 plt.title("Model Comparison Before and After Tuning")
 plt.xticks(rotation=45)
 plt.tight_layout()
 st.pyplot()
-
