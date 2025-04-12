@@ -34,7 +34,7 @@ models = {
     "Gradient Boosting": GradientBoostingClassifier()
 }
 
-# Function to evaluate models
+# Function to evaluate model
 def evaluate_model(name, model, X_test, y_test):
     y_pred = model.predict(X_test)
     return {
@@ -45,60 +45,56 @@ def evaluate_model(name, model, X_test, y_test):
         "F1 Score": f1_score(y_test, y_pred)
     }
 
-# Streamlit UI components for parameter selection
-st.title("PCOS Diagnosis Model Comparison")
-st.sidebar.header("Hyperparameter Tuning")
+# Streamlit UI
+st.title("PCOS Diagnosis: Model Evaluation Dashboard")
+st.sidebar.header("Select Model and Tune Parameters")
 
 # Select model
-model_name = st.sidebar.selectbox("Select Model", list(models.keys()))
+model_name = st.sidebar.selectbox("Choose Model", list(models.keys()))
 
-# Display hyperparameter options based on the selected model
+# Set tuning options for selected model
+params = {}
 if model_name == "Logistic Regression":
-    C = st.sidebar.select_slider("C (Regularization Strength)", options=[0.1, 1, 10], value=1)
+    C = st.sidebar.select_slider("C (Regularization Strength)", options=[0.001, 0.01, 0.1, 1, 10], value=1)
     params = {"C": [C]}
 elif model_name == "Decision Tree":
-    max_depth = st.sidebar.select_slider("Max Depth", options=[3, 5, 7, 10], value=5)
+    max_depth = st.sidebar.select_slider("Max Depth", options=[3, 5, 7, 10, None], value=5)
     params = {"max_depth": [max_depth]}
 elif model_name == "Random Forest":
-    n_estimators = st.sidebar.select_slider("Number of Estimators", options=[50, 100], value=100)
-    max_depth = st.sidebar.select_slider("Max Depth", options=[5, 10, 15], value=10)
+    n_estimators = st.sidebar.select_slider("Estimators", options=[10, 50, 100, 200], value=100)
+    max_depth = st.sidebar.select_slider("Max Depth", options=[3, 5, 10, 20, None], value=10)
     params = {"n_estimators": [n_estimators], "max_depth": [max_depth]}
 elif model_name == "SVM":
     C = st.sidebar.select_slider("C (Regularization)", options=[0.1, 1, 10], value=1)
-    kernel = st.sidebar.selectbox("Kernel", options=["linear", "rbf"], index=1)
+    kernel = st.sidebar.selectbox("Kernel", ["linear", "rbf"])
     params = {"C": [C], "kernel": [kernel]}
 elif model_name == "Gradient Boosting":
-    n_estimators = st.sidebar.select_slider("Number of Estimators", options=[50, 100], value=100)
-    learning_rate = st.sidebar.select_slider("Learning Rate", options=[0.01, 0.1], value=0.1)
+    n_estimators = st.sidebar.select_slider("Estimators", options=[50, 100, 200], value=100)
+    learning_rate = st.sidebar.select_slider("Learning Rate", options=[0.01, 0.1, 0.2], value=0.1)
     params = {"n_estimators": [n_estimators], "learning_rate": [learning_rate]}
 
-# Train untuned models
-untuned_results = []
-for name, model in models.items():
-    model.fit(X_train, y_train)
-    untuned_results.append(evaluate_model(name, model, X_test, y_test))
+# Train untuned version
+base_model = models[model_name]
+base_model.fit(X_train, y_train)
+untuned_result = evaluate_model(f"{model_name} (Untuned)", base_model, X_test, y_test)
 
-# Hyperparameter tuning for selected model
-grid_search = GridSearchCV(models[model_name], params, cv=5)
-grid_search.fit(X_train, y_train)
-best_model = grid_search.best_estimator_
+# Train tuned version
+tuner = GridSearchCV(base_model, params, cv=5)
+tuner.fit(X_train, y_train)
+tuned_model = tuner.best_estimator_
+tuned_result = evaluate_model(f"{model_name} (Tuned)", tuned_model, X_test, y_test)
 
-# Evaluate the tuned model
-tuned_result = evaluate_model(f"{model_name} (Tuned)", best_model, X_test, y_test)
+# Combine results
+comparison_df = pd.DataFrame([untuned_result, tuned_result])
 
-# Combine untuned and tuned results
-combined_results = pd.DataFrame(untuned_results)
-combined_results = pd.concat([combined_results, pd.DataFrame([tuned_result])], ignore_index=True)
+# Show results
+st.subheader(f"{model_name} Evaluation Summary")
+st.dataframe(comparison_df.set_index("Model"))
 
-# Display results
-st.subheader(f"Model Evaluation: {model_name}")
-st.write(tuned_result)
-
-# Visualization of both untuned and tuned models
-st.subheader("Model Comparison Before and After Tuning")
-plt.figure(figsize=(12, 6))
-sns.barplot(data=combined_results.melt(id_vars="Model", var_name="Metric", value_name="Score"), x="Model", y="Score", hue="Metric")
-plt.title("Model Comparison Before and After Tuning")
-plt.xticks(rotation=45)
-plt.tight_layout()
-st.pyplot()
+# Plot
+st.subheader("Comparison Chart")
+plt.figure(figsize=(10, 6))
+melted = comparison_df.melt(id_vars="Model", var_name="Metric", value_name="Score")
+sns.barplot(data=melted, x="Metric", y="Score", hue="Model")
+plt.title(f"{model_name}: Untuned vs Tuned")
+st.pyplot(plt.gcf())
