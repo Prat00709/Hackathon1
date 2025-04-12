@@ -56,13 +56,13 @@ model_name = st.sidebar.selectbox("Choose Model", list(models.keys()))
 params = {}
 if model_name == "Logistic Regression":
     C = st.sidebar.select_slider("C (Regularization Strength)", options=[0.001, 0.01, 0.1, 1, 10], value=1)
-    penalty = st.sidebar.select_sidebar("Penalty",options=['l1','l2','elasticnet','None'])
+    penalty = st.sidebar.selectbox("Penalty",options=['l1','l2','elasticnet','None'])
     max_iter=st.sidebar.select_sidebar("Max Iterations",options= [100,500,1000,1500],value=100)
     params = {"C": [C],"penalty":[penalty],"max_iter":[max_iter]}
 elif model_name == "Decision Tree":
     max_depth = st.sidebar.select_slider("Max Depth", options=[3, 5, 7, 10, None], value=5)
     split = st.sidebar.select_slider("Minimum Sample Split",options = [1,2,3,None],value=1)
-    crit=st.sidebar.select_sidebar("Criterion",options=['gini','entropy','log_loss'])
+    crit=st.sidebar.selectbox("Criterion",options=['gini','entropy','log_loss'])
     params = {"max_depth": [max_depth],"split":[split],"crit":[crit]}
 elif model_name == "Random Forest":
     n_estimators = st.sidebar.select_slider("Estimators", options=[10, 50, 100, 200], value=100)
