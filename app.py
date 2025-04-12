@@ -59,7 +59,7 @@ if model_name == "Logistic Regression":
     params = {"C": [C]}
 elif model_name == "Decision Tree":
     max_depth = st.sidebar.select_slider("Max Depth", options=[3, 5, 7, 10, None], value=5)
-    split = st.sidebar("Minimum Sample Split",options = [1,2,3],value=1)
+    split = st.sidebar.select_slider("Minimum Sample Split",options = [1,2,3],value=1)
     params = {"max_depth": [max_depth],"split":[split]}
 elif model_name == "Random Forest":
     n_estimators = st.sidebar.select_slider("Estimators", options=[10, 50, 100, 200], value=100)
