@@ -54,7 +54,7 @@ model_name = st.sidebar.selectbox("Select Model", list(models.keys()))
 
 # Display hyperparameter options based on the selected model
 if model_name == "Logistic Regression":
-    C = st.sidebar.select_slider("C (Regularization Strength)", options=[0.001,0.01,0.1,10], value=5)
+    C = st.sidebar.select_slider("C (Regularization Strength)", options=[0.001,0.01,0.1,10], value=10)
     params = {"C": [C]}
 elif model_name == "Decision Tree":
     max_depth = st.sidebar.select_slider("Max Depth", options=[3, 5, 7, 10], value=5)
