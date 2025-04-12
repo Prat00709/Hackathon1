@@ -14,7 +14,8 @@ Interactive Dashboard: Visualizes performance comparisons between untuned and tu
 
 Why it matters:
 
-Early and accurate detection of PCOS is critical for effective treatment and management. By evaluating various machine learning models and allowing for real-time tuning and visualization, this project helps:
+Early and accurate diagnosis of PCOS is critical for mitigating long-term health risks in women. This platform helps practitioners and researchers assess classification models using real-world medical data, promoting transparency, reproducibility, and optimization in diagnostic modeling.
+By evaluating various machine learning models and allowing for real-time tuning and visualization, this project helps:
 
 Identify the most suitable classification algorithm for diagnosing PCOS.
 
