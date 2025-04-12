@@ -14,7 +14,7 @@ Interactive Dashboard: Visualizes performance comparisons between untuned and tu
 
 Why it matters:
 
-Early and accurate diagnosis of PCOS is critical for mitigating long-term health risks in women. This platform helps practitioners and researchers assess classification models using real-world medical data, promoting transparency, reproducibility, and optimization in diagnostic modeling.
+Early and accurate diagnosis of PCOS is critical for mitigating long-term health risks in women. This platform helps practitioners and researchers assess classification models, promoting transparency, reproducibility, and optimization in diagnostic modeling.
 By evaluating various machine learning models and allowing for real-time tuning and visualization, this project helps:
 
 Identify the most suitable classification algorithm for diagnosing PCOS.
@@ -45,10 +45,6 @@ Clean and User-Friendly Dashboard
 
 Built with Streamlit, the dashboard provides an intuitive layout for model selection, tuning, and result visualization, making it easy to interpret and use.
 
-Automated Best Model Selection
-
-Uses GridSearchCV to perform cross-validated hyperparameter tuning, ensuring that each model is optimized before comparison.
-
 Technologies Used
 
 Python: Core programming language for data manipulation, modeling, and visualization.
@@ -61,20 +57,18 @@ Matplotlib & Seaborn: For static and dynamic visualizations of model performance
 
 Streamlit: To create the interactive, real-time dashboard for model comparison and tuning.
 
-GridSearchCV: For systematic and automated hyperparameter optimization with cross-validation.
 
-
-Setup Instructions
+Setup Instructions (for using the dashboard through github)
 
 1. Clone or Download the Project
 
-2. Install Python (if not already installed)
+2. Upload the project on Github repository
 
-3. Create and Activate a Virtual Environment
+3. Upload the dataset in the same repository as the project
 
-4. Install Required Libraries
+4. Create a requirements.txt file containing the required libraries
 
-5. Place the Dataset
+5. Login into streamlit.io website using github account
 
 6. Run the Streamlit App
 
