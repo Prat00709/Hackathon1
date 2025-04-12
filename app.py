@@ -83,7 +83,7 @@ model_choice = st.sidebar.selectbox("Select Model to Tune", list(models.keys()))
 
 # Hyperparameter selection
 if model_choice == "Logistic Regression":
-    C = st.sidebar.select_slider("C (Regularization Strength)", options=[0.01, 0.1, 1, 10], value=1)
+    C = st.sidebar.select_slider("C (Regularization Strength)", 0.00,10.0,5.0)
     penalty_opt = st.sidebar.selectbox("Penalty", options=['l1', 'l2', 'elasticnet', 'None'])
     penalty = None if penalty_opt == "None" else penalty_opt
     max_iter = st.sidebar.select_slider("Max Iterations", options=[100, 200, 500, 1000, 2000], value=1000)
@@ -110,7 +110,7 @@ elif model_choice == "Random Forest":
     param_grid = {"n_estimators": [n_estimators], "max_depth": [max_depth]}
 
 elif model_choice == "SVM":
-    C = st.sidebar.slider("C", 0.1,10.0,5.0)
+    C = st.sidebar.slider("C(Regularization)", 0.1,10.0,5.0)
     kernel = st.sidebar.selectbox("Kernel", ["linear", "rbf", "poly"])
     gamma = st.sidebar.selectbox("Gamma (Kernel Co-efficient)", options=['scale', 'auto'])
     model = SVC()
